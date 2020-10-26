@@ -67,7 +67,7 @@
 	<button value=eliminar>❌</button>
 </div>`.replaceAll(/[\n\t]/g,'');
 				timersHolder.append(template.content.firstElementChild);
-				this.cosas=/*[...*/timersHolder.lastElementChild.children//];
+				this.cosas=timersHolder.lastElementChild.children];
 				this.timeHolder=this.cosas[1];
 				
 				this.state=1;
@@ -98,7 +98,7 @@
 						this.ticks-=cuanto;
 						this.updateDisplay();
 						break;
-					}//else eliminar
+					}/* else eliminar */
 				case 'eliminar':
 					this.state=0;
 					if(!this.audio.paused)
@@ -151,11 +151,11 @@
 		}
 		
 		addEventListener('DOMContentLoaded',()=>{
-			//UI
+			/* UI */
 			let options=new Array(60).fill(0).reduce((acc,el,i)=>acc+`<option value=${i}>${i}</option>`,'');
 			gEt('minutos').innerHTML=gEt('segundos').innerHTML=options;
 			
-			//handlers
+			/* handlers */
 			gEt('timers').onclick=e=>{
 				let target=e.target;
 				if(target.nodeName=='BUTTON')
