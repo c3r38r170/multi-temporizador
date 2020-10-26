@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Multi-temporizador</title>
+	<style>
+		html,body{
+			height: 100%;}
+			body{
+				display: grid;grid-template-rows: 1fr auto;gap:5px;
+				margin: 0;padding: 5px;box-sizing: border-box;
+				font-family: sans-serif;}
+				#timers{
+					display: flex;flex-direction: column;gap: 5px;
+					overflow: auto;}
+					.timer{
+						display: grid;grid-template-columns: 1fr repeat(5,auto);grid-template-areas: "a a a a a a" "b c d e f g";
+						border: solid 1px;padding: 5px;}
+						.tag{
+							grid-area: a;text-align: center;padding: 5px 5px 10px 5px;}
+						.display{
+							text-align: center;height: min-content;margin: auto;}
+							.blink{
+								animation: blink 1s infinite;}
+						.timer > select{
+							height: calc(100% - 2px);margin: 1px;}
+				body > button{
+					padding: 10px 0;}
+				#choser{
+					display: none;
+					position: fixed;height: 100%;width: 100%;top: 0;left: 0;
+					background: rgba(125,125,125,.5);}
+					#choser > div{
+						background: white;padding: 10px;border-radius: 10px;
+						display: grid;margin: auto;}
+			@keyframes blink {
+				0%{color:black;}
+				50%{color:red;}
+			}
+	</style>
+	<script>
+		var timers=[]
+			,sonidoSrc='https://onlineclock.net/audio/options/default.mp3';
+		
+		class Temporizador{
+			constructor(h,m,s,tag){
+				this.audio=new Audio(sonidoSrc);
+				this.audio.loop=true;
+				this.ticks=Math.floor(h*60*6 + m*6 + s);
+				this.id=timers.push(this);
+				
+				let timersHolder=gEt('timers')
+					,template=document.createElement('template');
+				template.innerHTML=`
+<div data-id=${this.id} class=timer>
+	<span class=tag>${tag}</span>
+	<span class=display>${formatTime(h,m,s)}</span>
+	<button value="pause/play">⏸</button>
+	<select>
+		<option value=0>s</option>
+		<option value=1>m</option>
+		<option value=2>H</option>
+	</select>
+	<button value=mas>➕</button>
+	<button value=menos>➖</button>
+	<button value=eliminar>❌</button>
+</div>`.replaceAll(/[\n\t]/g,'');
+				timersHolder.append(template.content.firstElementChild);
+				this.cosas=/*[...*/timersHolder.lastElementChild.children//];
+				this.timeHolder=this.cosas[1];
+				
+				this.state=1;
+				this.start();
+			}
+			
+			change(type){
+				let cuanto=60**this.cosas[3].value;
+				switch(type){
+				case 'pause/play':
+					this.state=this.state==1?2:1;
+					if(this.state==1)
+						this.start();
+					this.cosas[2].innerText=this.state==1?'⏸':'▶';
+					break;
+				case 'mas':
+					this.ticks+=cuanto;
+					if(!this.audio.paused){
+						this.audio.pause();
+						this.cosas[2].disabled=false;
+						this.timeHolder.classList.remove('blink');
+						this.start();
+					}
+					this.updateDisplay();
+					break;
+				case 'menos':
+					if(this.ticks>=cuanto){
+						this.ticks-=cuanto;
+						this.updateDisplay();
+						break;
+					}//else eliminar
+				case 'eliminar':
+					this.state=0;
+					if(!this.audio.paused)
+						this.audio.pause();
+					this.cosas[0].parentNode.remove();
+					break;
+				}
+			}
+			
+			updateDisplay(){
+				this.timeHolder.innerText=formatTime(Math.floor(this.ticks/(60 * 60)),Math.floor(this.ticks/60%60),this.ticks%60);
+			}
+			
+			start(){
+				this.intervalID=setInterval(()=>{
+					console.log(this.id,this.intervalID,'sad');
+					if(this.state==0 || this.state==2){
+						clearInterval(this.intervalID);
+						return;
+					}
+					
+					this.ticks--;
+					if(this.ticks==0){
+						clearInterval(this.intervalID);
+						this.cosas[2].disabled=true;
+						this.timeHolder.classList.add('blink');
+						this.audio.play();
+					}
+					this.updateDisplay();
+				},1000);
+			}
+		}
+		
+		function gEt(sel){
+			return document.getElementById(sel);
+		}
+		
+		function añadir(){
+			let horas=gEt('horas').value
+				,minutos=gEt('minutos').value
+				,segundos=gEt('segundos').value
+				,etiqueta=gEt('etiqueta').value.trim();
+			if(etiqueta!='' && (horas!=0 || (minutos!=-1 && minutos!=0) || (segundos!=-1 && segundos!=0)))
+				new Temporizador(horas,minutos,segundos,etiqueta);
+			gEt('choser').click();
+		}
+		
+		function formatTime(h,m,s){
+			return `${h}:${m<10?0:''}${m}:${s<10?0:''}${s}`;
+		}
+		
+		addEventListener('DOMContentLoaded',()=>{
+			//UI
+			let options=new Array(60).fill(0).reduce((acc,el,i)=>acc+`<option value=${i}>${i}</option>`,'');
+			gEt('minutos').innerHTML=gEt('segundos').innerHTML=options;
+			
+			//handlers
+			gEt('timers').onclick=e=>{
+				let target=e.target;
+				if(target.nodeName=='BUTTON')
+					timers[+target.parentNode.dataset.id-1].change(target.value);
+			}
+		})
+	</script>
+</head>
+<body>
+	<div id="timers"></div>
+	<button onclick="this.nextElementSibling.style.display='flex'">Añadir</button>
+	<div id="choser" onclick="if(event.target==this)this.style.display='none'">
+		<div>
+			Etiqueta: <input id="etiqueta">
+			Horas: <input type=number id="horas" step=1 min="0" value=0></input>
+			Minutos: <select id="minutos"></select>
+			Segundos: <select id="segundos"></select>
+			<button onclick="añadir()">Añadir</button>
+		</div>
+	</div>
+</body>
+</html>
