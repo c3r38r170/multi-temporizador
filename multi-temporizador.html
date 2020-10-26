@@ -67,7 +67,7 @@
 	<button value=eliminar>❌</button>
 </div>`.replaceAll(/[\n\t]/g,'');
 				timersHolder.append(template.content.firstElementChild);
-				this.cosas=timersHolder.lastElementChild.children];
+				this.cosas=timersHolder.lastElementChild.children;
 				this.timeHolder=this.cosas[1];
 				
 				this.state=1;
@@ -114,7 +114,6 @@
 			
 			start(){
 				this.intervalID=setInterval(()=>{
-					console.log(this.id,this.intervalID,'sad');
 					if(this.state==0 || this.state==2){
 						clearInterval(this.intervalID);
 						return;
